@@ -1,4 +1,5 @@
-# python==3.12
+# ollama
+ollama==0.1.8
 
 # CLI framework
 typer[all]==0.12.3
@@ -18,6 +19,9 @@ chromadb==0.5.3
 # CLI UX
 tqdm==4.66.4
 rich==13.7.1
+colorama==0.3.8
 
 # Environment variables
 python-dotenv==1.0.1
+
+
