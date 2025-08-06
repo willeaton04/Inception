@@ -6,7 +6,7 @@ Results formatting and output utilities
 import json
 from pathlib import Path
 from typing import Optional
-from data_models import ScanResults, FileAnalysis, SemanticInsight
+from reader.data_models import ScanResults, FileAnalysis, SemanticInsight
 
 
 class ResultFormatter:

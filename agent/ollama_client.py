@@ -12,7 +12,7 @@ from typing import Optional
 class OllamaManager:
     """Manages Ollama instance and API calls"""
 
-    def __init__(self, model: str = 'llama3.1', host: str = 'http://localhost:11434'):
+    def __init__(self, model: str = 'phi3', host: str = 'http://localhost:11434'):
         self.model = model
         self.host = host
         self.session = requests.Session()

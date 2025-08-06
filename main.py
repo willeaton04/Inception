@@ -48,7 +48,7 @@ def main():
         try:
             scraper = AgenticFileScraper(
                 goal=parsed_args['goal'],
-                ollama_model='llama3.1',  # Can be made configurable
+                ollama_model='phi3',  # Can be made configurable
                 vector_db_path="file_vectors.db"  # Can be made configurable
             )
         except RuntimeError as e:
@@ -109,7 +109,7 @@ def print_requirements():
     print("Ollama installation:")
     print("  curl -fsSL https://ollama.ai/install.sh | sh")
     print("  ollama serve")
-    print("  ollama pull llama3.1")
+    print("  ollama pull phi3")
     print()
 
 

@@ -22,7 +22,7 @@ from reader.data_models import (
 class AgenticFileScraper:
     """Main orchestrator for agentic file scraping with AI and vector context"""
 
-    def __init__(self, goal: str, ollama_model: str = 'llama3.1', vector_db_path: str = "file_vectors.db"):
+    def __init__(self, goal: str, ollama_model: str = 'phi3', vector_db_path: str = "file_vectors.db"):
         self.goal = goal
         self.start_time = time.time()
 
@@ -47,70 +47,7 @@ class AgenticFileScraper:
 
     def _parse_goal(self) -> ScanStrategy:
         """Parse goal into actionable strategy using AI"""
-        system_prompt = "You are an expert analyst. Create a concise 2-3 sentence summary of file scan results."
-
-        prompt = f"""
-Scan Goal: {self.goal}
-Focus Area: {self.strategy.scan_focus}
-Files Analyzed: {len(analyses)}
-High Relevance Files: {high_relevance_count}
-Average Relevance: {avg_relevance:.2f}
-Semantic Insights: {len(semantic_insights)}
-Top Findings: {top_findings[:6]}
-
-Write a concise summary highlighting the most important discoveries:"""
-
-        ai_summary = self.ollama.generate(prompt, system_prompt)
-
-        if ai_summary:
-            return ai_summary
-        else:
-            # Fallback summary
-            return f"Analyzed {len(analyses)} files with {high_relevance_count} highly relevant to '{self.goal}'. Found {len(semantic_insights)} semantic patterns across the codebase."
-
-    def _generate_recommendations(self, analyses: List[FileAnalysis], semantic_insights: List[SemanticInsight]) -> List[
-        str]:
-        """Generate comprehensive recommendations"""
-        recommendations = set()
-
-        # Collect recommendations from file analyses
-        for analysis in analyses:
-            for rec in analysis.recommendations:
-                if rec and len(rec.strip()) > 10:  # Filter out empty/short recs
-                    recommendations.add(rec)
-
-        # Add strategy-based recommendations
-        if self.strategy.scan_focus == 'security':
-            recommendations.add("Review authentication and authorization mechanisms")
-            recommendations.add("Audit for hardcoded credentials and secrets")
-        elif self.strategy.scan_focus == 'bugs':
-            recommendations.add("Run automated testing on identified problem areas")
-            recommendations.add("Consider code review for high-complexity functions")
-        elif self.strategy.scan_focus == 'performance':
-            recommendations.add("Profile identified performance bottlenecks")
-            recommendations.add("Consider caching strategies for frequently accessed data")
-
-        # Add semantic-based recommendations
-        if semantic_insights:
-            high_similarity_files = [s for s in semantic_insights if s.high_confidence_matches > 0]
-            if high_similarity_files:
-                recommendations.add("Review files with high semantic similarity for consistency")
-
-        # Convert to list and limit
-        rec_list = list(recommendations)
-        return rec_list[:8] if rec_list else ["Continue monitoring files for changes"]
-
-    def get_processing_stats(self) -> Dict[str, Any]:
-        """Get statistics about the processing session"""
-        return {
-            'session_id': self.session_id,
-            'goal': self.goal,
-            'strategy': self.strategy.to_dict(),
-            'processing_errors': [error.to_dict() for error in self.processing_errors],
-            'total_processing_time': time.time() - self.start_time,
-            'vector_db_stats': self.vector_db.get_database_stats()
-        }
-        """You are an expert file analysis strategist. Parse the user's goal into a JSON strategy.
+        system_prompt = """You are an expert file analysis strategist. Parse the user's goal into a JSON strategy.
 
 Return ONLY valid JSON with these exact fields:
 - keywords: List of important search terms (3-10 items)
@@ -583,38 +520,38 @@ Analyze this file:"""
 
         system_prompt = """You are an expert code and file analysis specialist. Create a concise, insightful 2-3 sentence summary of the scan results.
 
-    Focus on:
-    - Key discoveries related to the goal
-    - Most important patterns found
-    - Critical issues that need attention
-    - Overall assessment of the codebase/files
+Focus on:
+- Key discoveries related to the goal
+- Most important patterns found
+- Critical issues that need attention
+- Overall assessment of the codebase/files
 
-    Be specific about findings and use technical language appropriate for developers."""
+Be specific about findings and use technical language appropriate for developers."""
 
         prompt = f"""Scan Results Summary:
 
-    Goal: "{self.goal}"
-    Focus Area: {self.strategy.scan_focus}
-    Analysis Depth: {self.strategy.analysis_depth}
+Goal: "{self.goal}"
+Focus Area: {self.strategy.scan_focus}
+Analysis Depth: {self.strategy.analysis_depth}
 
-    Files Analyzed: {len(analyses)} files
-    High Relevance Files: {high_relevance_count} files (score > 0.6)
-    Average Relevance Score: {avg_relevance:.2f}
+Files Analyzed: {len(analyses)} files
+High Relevance Files: {high_relevance_count} files (score > 0.6)
+Average Relevance Score: {avg_relevance:.2f}
 
-    File Types Analyzed: {dict(list(file_types.items())[:5])}
+File Types Analyzed: {dict(list(file_types.items())[:5])}
 
-    Top Key Findings:
-    {chr(10).join(f"- {finding}" for finding in top_findings[:8])}
+Top Key Findings:
+{chr(10).join(f"- {finding}" for finding in top_findings[:8])}
 
-    Semantic Analysis:
-    - Total Insights: {len(semantic_insights)}
-    - High-Confidence Matches: {len(high_confidence_insights)}
-    - Top Semantic Queries: {[s.query for s in semantic_insights[:3]]}
+Semantic Analysis:
+- Total Insights: {len(semantic_insights)}
+- High-Confidence Matches: {len(high_confidence_insights)}
+- Top Semantic Queries: {[s.query for s in semantic_insights[:3]]}
 
-    Most Critical Patterns Found:
-    {chr(10).join(f"- {pattern}" for pattern in self.strategy.patterns_to_find[:4])}
+Most Critical Patterns Found:
+{chr(10).join(f"- {pattern}" for pattern in self.strategy.patterns_to_find[:4])}
 
-    Generate a professional, technical summary highlighting the most important discoveries and their implications:"""
+Generate a professional, technical summary highlighting the most important discoveries and their implications:"""
 
         ai_summary = self.ollama.generate(prompt, system_prompt)
 
@@ -650,3 +587,45 @@ Analyze this file:"""
             types_desc = f" Analyzed primarily {', '.join([f'{count} {ext}' for ext, count in top_file_types])} files."
 
             return f"Analyzed {len(analyses)} files focusing on {focus_desc}, with {high_relevance_count} files showing high relevance (avg score: {avg_relevance:.2f}).{insights_desc}{types_desc}"
+
+    def _generate_recommendations(self, analyses: List[FileAnalysis], semantic_insights: List[SemanticInsight]) -> List[str]:
+        """Generate comprehensive recommendations"""
+        recommendations = set()
+
+        # Collect recommendations from file analyses
+        for analysis in analyses:
+            for rec in analysis.recommendations:
+                if rec and len(rec.strip()) > 10:  # Filter out empty/short recs
+                    recommendations.add(rec)
+
+        # Add strategy-based recommendations
+        if self.strategy.scan_focus == 'security':
+            recommendations.add("Review authentication and authorization mechanisms")
+            recommendations.add("Audit for hardcoded credentials and secrets")
+        elif self.strategy.scan_focus == 'bugs':
+            recommendations.add("Run automated testing on identified problem areas")
+            recommendations.add("Consider code review for high-complexity functions")
+        elif self.strategy.scan_focus == 'performance':
+            recommendations.add("Profile identified performance bottlenecks")
+            recommendations.add("Consider caching strategies for frequently accessed data")
+
+        # Add semantic-based recommendations
+        if semantic_insights:
+            high_similarity_files = [s for s in semantic_insights if s.high_confidence_matches > 0]
+            if high_similarity_files:
+                recommendations.add("Review files with high semantic similarity for consistency")
+
+        # Convert to list and limit
+        rec_list = list(recommendations)
+        return rec_list[:8] if rec_list else ["Continue monitoring files for changes"]
+
+    def get_processing_stats(self) -> Dict[str, Any]:
+        """Get statistics about the processing session"""
+        return {
+            'session_id': self.session_id,
+            'goal': self.goal,
+            'strategy': self.strategy.to_dict(),
+            'processing_errors': [error.to_dict() for error in self.processing_errors],
+            'total_processing_time': time.time() - self.start_time,
+            'vector_db_stats': self.vector_db.get_database_stats()
+        }
