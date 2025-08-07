@@ -5,16 +5,14 @@ Combines CLI parsing, Ollama AI, and vector database for intelligent file analys
 """
 
 import sys
-import time
-from pathlib import Path
 
 # Import our modular components
-from cli.cli import (
+from cli import (
     parse_sys_argv, validate_arguments, validate_filepath,
     parse_extensions, display_help, display_parsed_args
 )
-from file_scraper.agentic_scraper import AgenticFileScraper
-from summarizer.result_formatter import format_results
+from agentic_scraper import AgenticFileScraper
+from result_formatter import format_results
 
 
 def main():
@@ -48,7 +46,7 @@ def main():
         try:
             scraper = AgenticFileScraper(
                 goal=parsed_args['goal'],
-                ollama_model='phi3',  # Can be made configurable
+                ollama_model='llama3',  # Can be made configurable
                 vector_db_path="file_vectors.db"  # Can be made configurable
             )
         except RuntimeError as e:
@@ -109,7 +107,7 @@ def print_requirements():
     print("Ollama installation:")
     print("  curl -fsSL https://ollama.ai/install.sh | sh")
     print("  ollama serve")
-    print("  ollama pull phi3")
+    print("  ollama pull llama3")
     print()
 
 
