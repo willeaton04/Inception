@@ -1,127 +1,95 @@
-# 🎯 Goal of MVP
+# Agentic Question-Answering System
 
-A single-command CLI tool that:
-1. Accepts a folder path.
-2. Detects and reads multiple file formats (PDF, DOCX, XLSX, TXT).
-3. Uses an LLM to decide which files to process first based on a user-defined goal.
-4. Outputs a structured summary to the terminal or file.
-5. Stores user context in a vector database
+This project is a sophisticated, agentic question-answering system that leverages AI to analyze a codebase or a directory of files and provide intelligent answers to user queries. It uses OpenAI's language models to understand questions, analyze file content, and synthesize comprehensive answers. A vector database, powered by ChromaDB, is used for efficient semantic search to find the most relevant information within the files.
 
---- 
+## Features
 
-# 📦 MVP Feature Set
+*   **Natural Language Questions:** Ask questions about your codebase in plain English.
+*   **Intelligent File Analysis:** The system intelligently identifies relevant files and analyzes their content to answer your questions.
+*   **Semantic Search:** Utilizes a vector database (ChromaDB) to perform semantic searches, finding relevant code snippets and text even if they don't contain the exact keywords from your question.
+*   **AI-Powered Synthesis:** Leverages OpenAI's powerful language models (e.g., GPT-4) to synthesize information from multiple sources and provide a coherent, easy-to-understand answer.
+*   **Command-Line Interface:** A user-friendly CLI for interacting with the system.
+*   **Extensible:** The system is designed to be extensible, allowing for the addition of new functionalities and integrations.
 
-# Inputs
-Required: Folder path containing files
+## How It Works
 
-## Optional flags:
-- --goal "Find Q4 financial data" (scraping objective)
-- --ext pdf,docx,xlsx (restrict file types)
-- --output summary.json (write to file instead of stdout)
-- --local (use local model instead of API)
+The system follows these steps to answer a question:
 
-# Core Functions
-1. File scanning
-•Recursively scan a directory for supported files.
-•Detect file type by extension or magic number.
-2. File reading/parsing
-•PDFs → pymupdf
-•DOCX → python-docx
-•XLSX → pandas
-•TXT → built-in Python
-3. Agentic decision-making
-•Feed list of available files + goal into an LLM (e.g., GPT-4.1-mini)
-•LLM returns next file to process until all relevant ones are done.
-4. Summarization
-•Summarize or extract data from each file according to the goal.
-•Store result in structured format (JSON/Markdown).
-5. CLI UX
-•Simple: filescraper ./data --goal "Extract Q4 financial numbers"
-•Progress indicator: “Processing file 2 of 7: report_2024.pdf”
-•Final output to console or file.
+1.  **Question Analysis:** When you ask a question, the system first analyzes it to understand your intent, the key concepts you're interested in, and the relevant file types.
+2.  **File Prioritization:** Based on the question analysis, the system prioritizes the files in the specified directory, ranking them by their likely relevance to your question.
+3.  **File Analysis and Embedding:** The system then reads the content of the most relevant files. For each file, it:
+    *   Chunks the content into smaller, manageable pieces.
+    *   Generates embeddings (vector representations) for each chunk using a sentence-transformer model.
+    *   Stores these embeddings in a ChromaDB vector database.
+4.  **Semantic Search:** The system performs a semantic search on the vector database to find the chunks of text that are most semantically similar to your question.
+5.  **Answer Synthesis:** The system sends the most relevant file insights and semantic search results to an OpenAI language model. The model then synthesizes this information to generate a comprehensive answer to your question.
+6.  **Result Presentation:** The final answer, along with supporting information such as the files that were used to generate the answer, is presented to you in the console.
 
---- 
+## Usage
 
-# Tech Stack
-- Language: Python (easy to package with pipx install)
-- File Parsing: pymupdf, python-docx, pandas
-- LLM API: OpenAI API (agent decision + summarization)
-- CLI Framework: click or typer for nice command-line UX
-- Packaging: setuptools + pipx or brew formula
+To use the system, run the `main.py` script from your terminal.
 
---- 
+### Prerequisites
 
-# 🛠 MVP Limitations (Okay for First Release)
-- Only supports 4–5 file formats.
-- Simple agent loop (pick next file → process → repeat).
+*   Python 3.7+
+*   An OpenAI API key
 
---- 
+### Installation
 
-┌─────────────────────────────────────────────┐
-│ 1. CLI Entry Point                          │
-│  (Typer / Click parses folder path, goal,   │
-│   extensions, output options)               │
-└─────────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────┐
-│ 2. File Scanner                              │
-│  - Recursively scan folder                   │
-│  - Filter by allowed extensions              │
-│  - Create list of file paths                 │
-└─────────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────┐
-│ 3. Agent Decision Loop                       │
-│  - Send file list + goal to LLM               │
-│  - LLM picks next file to process             │
-└─────────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────┐
-│ 4. File Reader                               │
-│  - PDF: PyMuPDF                              │
-│  - DOCX: python-docx                         │
-│  - XLSX/CSV: pandas                          │
-│  - TXT: open()                               │
-│  → Returns raw text                          │
-└─────────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────┐
-│ 5. Summarizer / Extractor                    │
-│  - Send file text + goal to LLM              │
-│  - Get summary or structured data            │
-└─────────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────┐
-│ 6. Store context to database                 │
-│  - add to vector database                    │
-│  -                                           │
-└─────────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────┐
-│ 7. Output Handler                            │
-│  - Append to JSON/Markdown/CSV               │
-│  - Or print to stdout                        │
-└─────────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────┐
-│ 8. Loop Until All Relevant Files Are Done    │
-│  - Remove processed file from list           │
-│  - Repeat agent decision step                │
-└─────────────────────────────────────────────┘
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/your-username/your-repo-name.git
+    cd your-repo-name
+    ```
 
----
+2.  Install the required Python packages:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-# Key Notes
-- Keep each module separate (scanner, agent, reader, summarizer, output) so later you can swap:
-- Local model instead of API (Ollama)
-- New file parsers
-- Different output formats
-- Start with 4 file types only in MVP (PDF, DOCX, XLSX, TXT).
-- CLI should work in one command:
+3.  Set your OpenAI API key as an environment variable:
+    ```bash
+    export OPENAI_API_KEY="your-api-key"
+    ```
+
+### Running the System
+
+```bash
+python main.py <filepath> --question "Your question about the files"
+```
+
+**Arguments:**
+
+*   `<filepath>`: The path to the directory or file you want to analyze.
+*   `--question` or `-q`: The question you want to ask.
+
+**Optional Arguments:**
+
+*   `--ext` or `-e`: A comma-separated list of file extensions to include in the analysis (e.g., "py,js,md").
+*   `--output` or `-o`: The path to a file where you want to save the results in JSON format.
+*   `--model` or `-m`: The OpenAI model to use (e.g., "gpt-4-turbo-preview", "gpt-4").
+
+### Example
+
+```bash
+python main.py . --question "What is the main purpose of this project?"
+```
+
+## Configuration
+
+The system can be configured through command-line arguments. For more details on the available options, run:
+
+```bash
+python main.py --help
+```
+
+## Dependencies
+
+The project relies on the following Python packages:
+
+*   `openai`: For interacting with the OpenAI API.
+*   `chromadb`: For the vector database.
+*   `sentence-transformers`: For generating text embeddings.
+*   `numpy`: For numerical operations.
+
+You can install all the dependencies by running `pip install -r requirements.txt`.
