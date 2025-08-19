@@ -646,7 +646,7 @@ if __name__ == "__main__":
     """
 
     file_id = db.store_file(
-        Path("test.py"),
+        Path("webscrapper/test.py"),
         test_content,
         {"file_type": "text/python", "project": "test"}
     )
