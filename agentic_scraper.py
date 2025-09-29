@@ -61,7 +61,7 @@ class AgenticQuestionAnswerer:
         self.session_id = hashlib.md5(f"{question}{datetime.now().isoformat()}".encode()).hexdigest()[:12]
 
         # Initialize components
-        print(f'\033[1;33m[Initializing]:\033[0m Setting up AI and vector database...')
+        # print(f'\033[1;33m[Initializing]:\033[0m Setting up AI and vector database...')
 
         try:
             self.openai = OpenAIManager(api_key=openai_api_key, model=openai_model)

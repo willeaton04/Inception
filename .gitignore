@@ -2,3 +2,9 @@
 .venv/
 .env
 output.txt
+file_vectors.db/
+file_vectors.corrupted.bak
+webscrapper/
+node_modules/
+*.json
+__pycache__/
