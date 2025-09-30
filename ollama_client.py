@@ -1,59 +1,50 @@
-#!/usr/bin/env python3
-"""
-OpenAI API client for question answering and analysis
-"""
+
+# Ollama API client for question answering and analysis
+
 
 import os
 import json
 import time
 from typing import Optional, Dict, Any, List
 import logging
-from openai import OpenAI
+import ollama
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 
-class OpenAIManager:
-    """Manages OpenAI API calls for question answering and file analysis"""
+class OllamaManager:
+    """Manages Ollama API calls for question answering and file analysis"""
 
     def __init__(self,
-                 api_key: Optional[str] = None,
-                 model: str = "gpt-4-turbo-preview",
+                 model: str = "gemma2:2b",
                  temperature: float = 0.1,
                  max_tokens: int = 2000):
         """
-        Initialize OpenAI client
+        Initialize Ollama client
 
         Args:
-            api_key: OpenAI API key (defaults to env var OPENAI_API_KEY)
-            model: Model to use (gpt-4-turbo-preview, gpt-3.5-turbo, etc.)
+            model: Model to use (e.g., "gemma2:2b")
             temperature: Response randomness (0.0-1.0)
             max_tokens: Maximum tokens in response
         """
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError(
-                "OpenAI API key required. Set OPENAI_API_KEY environment variable or pass api_key parameter.")
-
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = ollama.Client(host='http://localhost:11434')
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.logger = logging.getLogger(__name__)
 
-        # Track usage for cost monitoring
+        # Track usage
         self.total_tokens_used = 0
-        self.total_cost = 0.0
 
-        self.logger.info(f"OpenAI client initialized with model: {model}")
+        self.logger.info(f"Ollama client initialized with model: {model}")
 
     def check_status(self) -> bool:
-        """Check if OpenAI API is accessible"""
+        """Check if Ollama API is accessible"""
         try:
             # Try a minimal API call
-            response = self.client.models.retrieve(self.model)
+            self.client.list()
             return True
         except Exception as e:
-            self.logger.error(f"OpenAI API check failed: {str(e)}")
+            self.logger.error(f"Ollama API check failed: {str(e)}")
             return False
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
@@ -90,19 +81,20 @@ Important: Base your answer solely on the provided context. Do not make assumpti
         ]
 
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.chat(
                 model=self.model,
                 messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens
+                options={
+                    "temperature": self.temperature,
+                    "num_predict": self.max_tokens
+                }
             )
 
             # Track usage
-            if response.usage:
-                self.total_tokens_used += response.usage.total_tokens
-                self._update_cost(response.usage.total_tokens)
+            if response.get('total_duration'):
+                self.total_tokens_used += response.get('eval_count', 0)
 
-            answer = response.choices[0].message.content.strip()
+            answer = response['message']['content'].strip()
             self.logger.info(f"Generated answer for question: {question[:50]}...")
 
             return answer
@@ -139,19 +131,20 @@ Return ONLY valid JSON."""
         ]
 
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.chat(
                 model=self.model,
                 messages=messages,
-                temperature=0.1,
-                max_tokens=500,
-                response_format={"type": "json_object"}
+                options={
+                    "temperature": 0.1,
+                    "num_predict": 500
+                },
+                format="json"
             )
+            
+            if response.get('total_duration'):
+                self.total_tokens_used += response.get('eval_count', 0)
 
-            if response.usage:
-                self.total_tokens_used += response.usage.total_tokens
-                self._update_cost(response.usage.total_tokens)
-
-            analysis = json.loads(response.choices[0].message.content)
+            analysis = json.loads(response['message']['content'])
             self.logger.info(f"Analyzed question intent: {analysis.get('intent', 'unknown')}")
 
             return analysis
@@ -213,19 +206,20 @@ Be selective and only include information that helps answer the question."""
         ]
 
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.chat(
                 model=self.model,
                 messages=messages,
-                temperature=0.1,
-                max_tokens=1000,
-                response_format={"type": "json_object"}
+                options={
+                    "temperature": 0.1,
+                    "num_predict": 1000
+                },
+                format="json"
             )
 
-            if response.usage:
-                self.total_tokens_used += response.usage.total_tokens
-                self._update_cost(response.usage.total_tokens)
+            if response.get('total_duration'):
+                self.total_tokens_used += response.get('eval_count', 0)
 
-            insights = json.loads(response.choices[0].message.content)
+            insights = json.loads(response['message']['content'])
             self.logger.info(f"Extracted insights from {file_path}: relevance={insights.get('relevance_score', 0)}")
 
             return insights
@@ -299,18 +293,19 @@ Guidelines:
         ]
 
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.chat(
                 model=self.model,
                 messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens
+                options={
+                    "temperature": self.temperature,
+                    "num_predict": self.max_tokens
+                }
             )
 
-            if response.usage:
-                self.total_tokens_used += response.usage.total_tokens
-                self._update_cost(response.usage.total_tokens)
+            if response.get('total_duration'):
+                self.total_tokens_used += response.get('eval_count', 0)
 
-            answer = response.choices[0].message.content.strip()
+            answer = response['message']['content'].strip()
             return answer
 
         except Exception as e:
@@ -347,18 +342,19 @@ Generate follow-up questions that:
 Return only the questions, one per line."""
 
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.chat(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_tokens=200
+                options={
+                    "temperature": 0.3,
+                    "num_predict": 200
+                }
             )
 
-            if response.usage:
-                self.total_tokens_used += response.usage.total_tokens
-                self._update_cost(response.usage.total_tokens)
+            if response.get('total_duration'):
+                self.total_tokens_used += response.get('eval_count', 0)
 
-            questions = response.choices[0].message.content.strip().split('\n')
+            questions = response['message']['content'].strip().split('\n')
             # Clean and filter questions
             questions = [q.strip().lstrip('- ').lstrip('• ').strip()
                          for q in questions if q.strip() and '?' in q]
@@ -369,45 +365,15 @@ Return only the questions, one per line."""
             self.logger.error(f"Error generating follow-up questions: {str(e)}")
             return []
 
-    def _update_cost(self, tokens: int):
-        """Update cost tracking based on token usage"""
-        # Approximate costs (update based on current OpenAI pricing)
-        cost_per_1k_tokens = {
-            "gpt-4-turbo-preview": 0.01,  # $0.01 per 1K input tokens
-            "gpt-4": 0.03,
-            "gpt-3.5-turbo": 0.0005
-        }
-
-        rate = cost_per_1k_tokens.get(self.model, 0.01)
-        cost = (tokens / 1000) * rate
-        self.total_cost += cost
-
     def get_usage_stats(self) -> Dict[str, Any]:
-        """Get usage statistics"""
+        """
+        Get usage statistics"""
         return {
             "model": self.model,
             "total_tokens_used": self.total_tokens_used,
-            "estimated_cost": f"${self.total_cost:.4f}",
             "temperature": self.temperature,
             "max_tokens": self.max_tokens
         }
-
-    def set_model(self, model: str) -> bool:
-        """Change the model being used"""
-        available_models = [
-            "gpt-4-turbo-preview",
-            "gpt-4",
-            "gpt-3.5-turbo",
-            "gpt-3.5-turbo-16k"
-        ]
-
-        if model in available_models:
-            self.model = model
-            self.logger.info(f"Model changed to: {model}")
-            return True
-        else:
-            self.logger.warning(f"Model {model} not in available models: {available_models}")
-            return False
 
 
 # Example usage
@@ -416,7 +382,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     # Initialize client
-    client = OpenAIManager()
+    client = OllamaManager()
 
     # Test question analysis
     question = "How does the authentication system work in this codebase?"

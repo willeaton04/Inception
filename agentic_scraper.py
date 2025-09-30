@@ -15,9 +15,9 @@ import logging
 
 # Handle imports with proper error messages
 try:
-    from ollama_client import OpenAIManager
+    from ollama_client import OllamaManager
 except ImportError:
-    print("Error: openai_client.py not found. Please ensure it's in the same directory.")
+    print("Error: ollama_client.py not found. Please ensure it's in the same directory.")
     raise
 
 try:
@@ -41,16 +41,14 @@ class AgenticQuestionAnswerer:
 
     def __init__(self,
                  question: str,
-                 openai_api_key: Optional[str] = None,
-                 openai_model: str = 'gpt-4-turbo-preview',
+                 ollama_model: str = 'gemma2:2b',
                  vector_db_path: str = "file_vectors.db"):
         """
         Initialize the question-answering system
 
         Args:
             question: User's question to answer
-            openai_api_key: OpenAI API key (defaults to env var)
-            openai_model: OpenAI model to use
+            ollama_model: Ollama model to use
             vector_db_path: Path for vector database storage
         """
         self.question = question
@@ -64,7 +62,7 @@ class AgenticQuestionAnswerer:
         # print(f'\033[1;33m[Initializing]:\033[0m Setting up AI and vector database...')
 
         try:
-            self.openai = OpenAIManager(api_key=openai_api_key, model=openai_model)
+            self.ollama = OllamaManager(model=ollama_model)
             self.vector_db = VectorDatabase(db_path=vector_db_path)
         except Exception as e:
             print(f'\033[1;31m[Error]:\033[0m Failed to initialize: {str(e)}')
@@ -89,7 +87,7 @@ class AgenticQuestionAnswerer:
         """Analyze the user's question to understand intent"""
         print(f'\033[1;36m[Analyzing Question]:\033[0m Understanding intent...')
 
-        analysis = self.openai.analyze_question_intent(self.question)
+        analysis = self.ollama.analyze_question_intent(self.question)
 
         print(f'\033[1;34m[Intent]:\033[0m {analysis.get("intent", "general")}')
         print(f'\033[1;34m[Scope]:\033[0m {analysis.get("scope", "broad")}')
@@ -263,7 +261,7 @@ class AgenticQuestionAnswerer:
                 self.logger.warning(f"Failed to store {file_path} in vector database")
 
             # Extract insights relevant to the question
-            insights = self.openai.extract_file_insights(
+            insights = self.ollama.extract_file_insights(
                 file_content=content,
                 file_path=str(file_path),
                 question=self.question
@@ -411,14 +409,14 @@ class AgenticQuestionAnswerer:
         # Synthesize final answer
         print(f'\033[1;33m[Synthesizing]:\033[0m Generating comprehensive answer...')
 
-        answer = self.openai.synthesize_answer(
+        answer = self.ollama.synthesize_answer(
             question=self.question,
             file_insights=relevant_insights,
             semantic_context=semantic_context
         )
 
         # Generate follow-up questions
-        follow_up_questions = self.openai.generate_follow_up_questions(
+        follow_up_questions = self.ollama.generate_follow_up_questions(
             question=self.question,
             answer=answer,
             context=semantic_context[:1000] if semantic_context else ""
@@ -441,7 +439,7 @@ class AgenticQuestionAnswerer:
                 'processing_time_seconds': time.time() - start_time,
                 'session_id': self.session_id
             },
-            'openai_usage': self.openai.get_usage_stats()
+            'ollama_usage': self.ollama.get_usage_stats()
         }
 
         # Print summary
@@ -557,12 +555,11 @@ class AgenticQuestionAnswerer:
             for i, q in enumerate(results['follow_up_questions'][:3], 1):
                 print(f'  {i}. {q}')
 
-        usage = results.get('openai_usage', {})
+        usage = results.get('ollama_usage', {})
         if usage:
             print(f'\n\033[1;34m[API Usage]:\033[0m')
             print(f'  • Model: {usage.get("model")}')
             print(f'  • Tokens: {usage.get("total_tokens_used")}')
-            print(f'  • Est. Cost: {usage.get("estimated_cost")}')
 
         print('=' * 60)
 
@@ -586,11 +583,11 @@ class AgenticQuestionAnswerer:
 class AgenticFileScraper(AgenticQuestionAnswerer):
     """Backward compatibility wrapper"""
 
-    def __init__(self, goal: str, ollama_model: str = 'llama3', vector_db_path: str = "file_vectors.db"):
+    def __init__(self, goal: str, ollama_model: str = 'gemma2:2b', vector_db_path: str = "file_vectors.db"):
         # Convert old parameters to new ones
         super().__init__(
             question=goal,
-            openai_model='gpt-3.5-turbo' if 'llama' in ollama_model.lower() else 'gpt-4-turbo-preview',
+            ollama_model=ollama_model,
             vector_db_path=vector_db_path
         )
 
