@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """
-ChromaDB Vector Database Implementation
 Provides semantic search and file embedding capabilities for AgenticFileScraper
 """
 

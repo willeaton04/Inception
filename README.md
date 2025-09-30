@@ -1,13 +1,13 @@
 # Agentic Question-Answering System
 
-This project is a sophisticated, agentic question-answering system that leverages AI to analyze a codebase or a directory of files and provide intelligent answers to user queries. It uses OpenAI's language models to understand questions, analyze file content, and synthesize comprehensive answers. A vector database, powered by ChromaDB, is used for efficient semantic search to find the most relevant information within the files.
+This project is a sophisticated, agentic question-answering system that leverages AI to analyze a codebase or a directory of files and provide intelligent answers to user queries. It uses Ollama's language models to understand questions, analyze file content, and synthesize comprehensive answers. A vector database, powered by ChromaDB, is used for efficient semantic search to find the most relevant information within the files.
 
 ## Features
 
 *   **Natural Language Questions:** Ask questions about your codebase in plain English.
 *   **Intelligent File Analysis:** The system intelligently identifies relevant files and analyzes their content to answer your questions.
 *   **Semantic Search:** Utilizes a vector database (ChromaDB) to perform semantic searches, finding relevant code snippets and text even if they don't contain the exact keywords from your question.
-*   **AI-Powered Synthesis:** Leverages OpenAI's powerful language models (e.g., GPT-4) to synthesize information from multiple sources and provide a coherent, easy-to-understand answer.
+*   **AI-Powered Synthesis:** Leverages Ollama's powerful language models (e.g., gemma2:2b) to synthesize information from multiple sources and provide a coherent, easy-to-understand answer.
 *   **Command-Line Interface:** A user-friendly CLI for interacting with the system.
 *   **Extensible:** The system is designed to be extensible, allowing for the addition of new functionalities and integrations.
 
@@ -22,7 +22,7 @@ The system follows these steps to answer a question:
     *   Generates embeddings (vector representations) for each chunk using a sentence-transformer model.
     *   Stores these embeddings in a ChromaDB vector database.
 4.  **Semantic Search:** The system performs a semantic search on the vector database to find the chunks of text that are most semantically similar to your question.
-5.  **Answer Synthesis:** The system sends the most relevant file insights and semantic search results to an OpenAI language model. The model then synthesizes this information to generate a comprehensive answer to your question.
+5.  **Answer Synthesis:** The system sends the most relevant file insights and semantic search results to an Ollama language model. The model then synthesizes this information to generate a comprehensive answer to your question.
 6.  **Result Presentation:** The final answer, along with supporting information such as the files that were used to generate the answer, is presented to you in the console.
 
 ## Usage
@@ -32,7 +32,7 @@ To use the system, run the `main.py` script from your terminal.
 ### Prerequisites
 
 *   Python 3.7+
-*   An OpenAI API key
+*   Ollama installed and running. You can download it from [https://ollama.ai/](https://ollama.ai/).
 
 ### Installation
 
@@ -45,11 +45,6 @@ To use the system, run the `main.py` script from your terminal.
 2.  Install the required Python packages:
     ```bash
     pip install -r requirements.txt
-    ```
-
-3.  Set your OpenAI API key as an environment variable:
-    ```bash
-    export OPENAI_API_KEY="your-api-key"
     ```
 
 ### Running the System
@@ -67,7 +62,7 @@ python main.py <filepath> --question "Your question about the files"
 
 *   `--ext` or `-e`: A comma-separated list of file extensions to include in the analysis (e.g., "py,js,md").
 *   `--output` or `-o`: The path to a file where you want to save the results in JSON format.
-*   `--model` or `-m`: The OpenAI model to use (e.g., "gpt-4-turbo-preview", "gpt-4").
+*   `--model` or `-m`: The Ollama model to use (e.g., "gemma2:2b").
 
 ### Example
 
@@ -87,7 +82,7 @@ python main.py --help
 
 The project relies on the following Python packages:
 
-*   `openai`: For interacting with the OpenAI API.
+*   `ollama`: For interacting with the Ollama API.
 *   `chromadb`: For the vector database.
 *   `sentence-transformers`: For generating text embeddings.
 *   `numpy`: For numerical operations.

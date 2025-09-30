@@ -1,5 +1,5 @@
 # ollama
-ollama==0.1.8
+ollama==0.2.1
 
 # CLI framework
 typer[all]==0.12.3
@@ -10,11 +10,8 @@ python-docx==1.1.0
 pandas==2.2.2
 openpyxl==3.1.5
 
-# LLM API
-openai==1.35.14
-
-# Vector database
-chromadb==0.5.3
+# # Vector database
+# chromadb==0.5.3
 
 # CLI UX
 tqdm==4.66.4
@@ -22,6 +19,6 @@ rich==13.7.1
 colorama==0.3.8
 
 # Environment variables
-python-dotenv==1.0.1
+# python-dotenv==1.0.1
 
-
+tenacity==8.4.1

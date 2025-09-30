@@ -6,5 +6,7 @@ file_vectors.db/
 file_vectors.corrupted.bak
 webscrapper/
 node_modules/
-*.json
 __pycache__/
+*.json
+package-lock.json
+package.json

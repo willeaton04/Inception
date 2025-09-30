@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Main entry point for the Agentic Question-Answering System
-Analyzes files to answer user questions using OpenAI and vector database
+Analyzes files to answer user questions using Ollama and vector database
 """
 
 import sys
@@ -50,7 +50,7 @@ def main():
         display_parsed_args(parsed_args, path, extensions)
 
         # Initialize the question-answering system with error handling
-        print('\033[1;33m[Initializing]:\033[0m Setting up AI and vector database...')
+        print('\033[1;33m[Initializing]:\033[0m Setting up LLM')
 
         try:
             # Import the correct class
@@ -59,8 +59,7 @@ def main():
             # Create the QA system with proper parameters
             qa_system = AgenticQuestionAnswerer(
                 question=parsed_args['question'],  # Use 'question' not 'goal'
-                openai_api_key=parsed_args.get('api_key'),
-                openai_model=parsed_args.get('model', 'gpt-3.5-turbo'),  # Default to gpt-3.5-turbo
+                ollama_model=parsed_args.get('model', 'gemma2:2b'),  # Default to gemma2:2b
                 vector_db_path="file_vectors.db"
             )
 
@@ -68,16 +67,9 @@ def main():
             print(f'\033[1;31m[Import Error]:\033[0m {str(e)}')
             print('\033[1;33m[Help]:\033[0m Make sure all required files are present:')
             print('  - agentic_scraper.py')
-            print('  - openai_client.py (or ollama_client.py if using OpenAI wrapper)')
+            print('  - ollama_client.py')
             print('  - vector_db.py')
             print('  - data_models.py')
-            sys.exit(1)
-        except ValueError as e:
-            # This catches the OpenAI API key error
-            print(f'\033[1;31m[Configuration Error]:\033[0m {str(e)}')
-            print('\033[1;33m[Help]:\033[0m Set your OpenAI API key:')
-            print('  export OPENAI_API_KEY="your-api-key-here"')
-            print('  or use --api-key parameter')
             sys.exit(1)
         except Exception as e:
             print(f'\033[1;31m[Initialization Error]:\033[0m {str(e)}')
@@ -124,12 +116,11 @@ def main():
 
         # Show additional statistics if available
         try:
-            if hasattr(qa_system, 'openai'):
-                usage_stats = qa_system.openai.get_usage_stats()
+            if hasattr(qa_system, 'ollama'):
+                usage_stats = qa_system.ollama.get_usage_stats()
                 if usage_stats:
-                    print(f'\n\033[1;34m[OpenAI Usage]:\033[0m')
+                    print(f'\n\033[1;34m[Ollama Usage]:\033[0m')
                     print(f'  Tokens: {usage_stats.get("total_tokens_used", 0)}')
-                    print(f'  Estimated cost: {usage_stats.get("estimated_cost", "$0.00")}')
         except:
             pass
 
@@ -149,24 +140,18 @@ def print_requirements():
     print("\033[1;32m[Agentic Question-Answering System Requirements]\033[0m")
     print()
     print("Python packages:")
-    print("  pip install openai chromadb sentence-transformers numpy")
+    print("  pip install ollama chromadb sentence-transformers numpy")
     print()
-    print("OpenAI API Setup:")
-    print("  1. Get API key from https://platform.openai.com/api-keys")
-    print("  2. Set environment variable:")
-    print("     export OPENAI_API_KEY='your-api-key-here'")
-    print()
-    print("Models available:")
-    print("  - gpt-4-turbo-preview (best quality)")
-    print("  - gpt-4 (high quality)")
-    print("  - gpt-3.5-turbo (fast and affordable)")
+    print("Ollama Setup:")
+    print("  1. Install Ollama from https://ollama.ai/")
+    print("  2. Run the Ollama server")
     print()
 
 
 def print_version():
     """Print version information"""
     print("Agentic Question-Answering System v2.0.0")
-    print("AI-powered file analysis using OpenAI and ChromaDB")
+    print("AI-powered file analysis using Ollama and ChromaDB")
     print("Answers questions based on your codebase and documents")
 
 

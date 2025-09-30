@@ -7,6 +7,7 @@ import sys
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
+# from dotenv import load_dotenv
 
 
 def parse_sys_argv() -> Optional[Dict[str, str]]:
@@ -22,7 +23,6 @@ def parse_sys_argv() -> Optional[Dict[str, str]]:
         'ext': None,
         'output': None,
         'model': None,
-        'api_key': None
     }
 
     # First argument should be filepath
@@ -67,14 +67,6 @@ def parse_sys_argv() -> Optional[Dict[str, str]]:
                 print('\033[1;31m[Error]: --model requires a value\033[0m')
                 sys.exit(1)
 
-        elif arg == '--api-key':
-            if i + 1 < len(args):
-                parsed['api_key'] = args[i + 1]
-                i += 2
-            else:
-                print('\033[1;31m[Error]: --api-key requires a value\033[0m')
-                sys.exit(1)
-
         elif arg == '--help' or arg == '-h':
             display_help()
             sys.exit(0)
@@ -103,12 +95,6 @@ def validate_arguments(parsed_args: Dict[str, str]) -> bool:
         print('\033[1;31m[Error]: --question is required\033[0m')
         return False
 
-    # Check for API key
-    if not parsed_args['api_key'] and not os.getenv('OPENAI_API_KEY'):
-        print(
-            '\033[1;31m[Error]: OpenAI API key required. Set OPENAI_API_KEY environment variable or use --api-key\033[0m')
-        return False
-
     return True
 
 
@@ -135,7 +121,7 @@ def parse_extensions(ext_string: Optional[str]) -> List[str]:
 def display_help() -> None:
     """Display usage help"""
     print('\033[1;32m╔════════════════════════════════════════════════════════════════╗\033[0m')
-    print('\033[1;32m║         Agentic Question-Answering System Help                 ║\033[0m')
+    print('\033[1;32m║                         Inception -Help                        ║\033[0m')
     print('\033[1;32m╚════════════════════════════════════════════════════════════════╝\033[0m')
     print()
     print('\033[1;33m[Usage]:\033[0m')
@@ -149,9 +135,7 @@ def display_help() -> None:
     print('  \033[1m--ext, -e\033[0m               Comma-separated file extensions to include')
     print('                          (e.g., "py,js,md" or ".py,.js,.md")')
     print('  \033[1m--output, -o\033[0m            Path to save results as JSON')
-    print('  \033[1m--model, -m\033[0m             OpenAI model to use')
-    print('                          Options: gpt-4-turbo-preview (default), gpt-4, gpt-3.5-turbo')
-    print('  \033[1m--api-key\033[0m               OpenAI API key (or set OPENAI_API_KEY env var)')
+    print('  \033[1m--model, -m\033[0m             Ollama model to use (default: gemma2:2b)')
     print('  \033[1m--help, -h\033[0m              Show this help message')
     print()
     print('\033[1;36m[Examples]:\033[0m')
@@ -166,7 +150,7 @@ def display_help() -> None:
     print('  python qa_system.py ./docs --question "What are the main features?" --output results.json')
     print()
     print('  \033[1;90m# Use specific model\033[0m')
-    print('  python qa_system.py ./code --question "Find security issues" --model gpt-4')
+    print('  python qa_system.py ./code --question "Find security issues" --model llama3')
     print()
     print('\033[1;36m[Question Examples]:\033[0m')
     print('  • "How does the authentication system work?"')
@@ -182,7 +166,6 @@ def display_help() -> None:
     print('  • The system analyzes files to provide comprehensive answers')
     print('  • It uses semantic search to find relevant content')
     print('  • Larger codebases may take longer to process')
-    print('  • API costs apply based on token usage')
     print()
     print('\033[1;32m════════════════════════════════════════════════════════════════\033[0m')
 
@@ -205,7 +188,8 @@ def display_parsed_args(args: Dict[str, str], path: Path, extensions: List[str])
     print(f'\033[1;34m[Question]:\033[0m {question_display}')
 
     if extensions:
-        print(f'\033[1;34m[Extensions]:\033[0m {", ".join(extensions)}')
+        print(f'\033[1;34m[Extensions]:\033[0m {", ".join(extensions)}'
+)
     else:
         print('\033[1;34m[Extensions]:\033[0m All supported file types')
 
@@ -215,7 +199,7 @@ def display_parsed_args(args: Dict[str, str], path: Path, extensions: List[str])
     if args.get('model'):
         print(f'\033[1;34m[Model]:\033[0m {args["model"]}')
     else:
-        print('\033[1;34m[Model]:\033[0m gpt-4-turbo-preview (default)')
+        print('\033[1;34m[Model]:\033[0m gemma2:2b (default)')
 
     print('\n' + '─' * 60)
     print()
@@ -226,7 +210,7 @@ def display_welcome_banner():
     print()
     print('\033[1;36m' + '=' * 60 + '\033[0m')
     print('\033[1;36m' + ' ' * 15 + 'AGENTIC QUESTION-ANSWERING SYSTEM' + ' ' * 11 + '\033[0m')
-    print('\033[1;36m' + ' ' * 18 + 'Powered by OpenAI & ChromaDB' + ' ' * 14 + '\033[0m')
+    print('\033[1;36m' + ' ' * 18 + 'Powered by Ollama & ChromaDB' + ' ' * 14 + '\033[0m')
     print('\033[1;36m' + '=' * 60 + '\033[0m')
     print()
 
@@ -262,15 +246,14 @@ def main():
     except ImportError as e:
         print(f'\033[1;31m[Error]: Failed to import system components: {str(e)}\033[0m')
         print('\nPlease ensure all dependencies are installed:')
-        print('  pip install openai chromadb sentence-transformers')
+        print('  pip install ollama chromadb sentence-transformers')
         sys.exit(1)
 
     # Initialize the system
     try:
         qa_system = AgenticQuestionAnswerer(
             question=parsed_args['question'],
-            openai_api_key=parsed_args.get('api_key'),
-            openai_model=parsed_args.get('model', 'gpt-4-turbo-preview')
+            ollama_model=parsed_args.get('model', 'gemma2:2b')
         )
     except Exception as e:
         print(f'\033[1;31m[Error]: Failed to initialize system: {str(e)}\033[0m')
