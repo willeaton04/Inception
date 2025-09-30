@@ -19,8 +19,8 @@ fi
 docker run -d \
   --name $CONTAINER_NAME \
   -p 11434:11434 \
-  --memory=2g \
-  --memory-swap=2g \
+#   --memory=2g \
+#   --memory-swap=2g \
   ollama/ollama:latest
 
 curl http://localhost:11434/
@@ -29,5 +29,7 @@ curl -s http://localhost:11434/api/generate -d '{
   "model": "gemma2:2b",
   "prompt": "Welcome to bad file systems!!"
 }'
+
+
 
 echo "Ollama is buzzin"

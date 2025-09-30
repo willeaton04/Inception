@@ -539,8 +539,8 @@ class AgenticQuestionAnswerer:
         print('=' * 60)
 
         print(f'\n\033[1;34m[Question]:\033[0m {results["question"]}')
-        print(f'\n\033[1;32m[Answer]:\033[0m\n{results["answer"][:500]}...'
-              if len(results["answer"]) > 500 else f'\n\033[1;32m[Answer]:\033[0m\n{results["answer"]}')
+        print(f'\n\033[1;32m[Answer]:\033[0m\n{results["answer"]}')
+            #   if len(results["answer"]) > 500 else f'\n\033[1;32m[Answer]:\033[0m\n{results["answer"]}')
 
         print(f'\n\033[1;34m[Confidence]:\033[0m {results["confidence"] * 100:.0f}%')
 

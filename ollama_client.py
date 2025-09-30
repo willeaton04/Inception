@@ -72,6 +72,7 @@ Your task is to:
 3. If the answer is not in the provided context, clearly state that
 4. Provide specific references to files when relevant
 5. Be concise but thorough in your response
+6. Return responses without markdown format
 
 Important: Base your answer solely on the provided context. Do not make assumptions beyond what's explicitly stated in the files."""
 
@@ -206,6 +207,7 @@ Be selective and only include information that helps answer the question."""
         ]
 
         try:
+            print('1')
             response = self.client.chat(
                 model=self.model,
                 messages=messages,
@@ -215,12 +217,20 @@ Be selective and only include information that helps answer the question."""
                 },
                 format="json"
             )
+            print(2)
 
             if response.get('total_duration'):
                 self.total_tokens_used += response.get('eval_count', 0)
 
+            print(3)
+
             insights = json.loads(response['message']['content'])
+
+            print(4)
+
             self.logger.info(f"Extracted insights from {file_path}: relevance={insights.get('relevance_score', 0)}")
+
+            print(5)
 
             return insights
 
